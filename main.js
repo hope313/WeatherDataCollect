@@ -1,6 +1,10 @@
 const client = require('cheerio-httpcli');
 const fs = require('fs');
 
+client.set('headers', {
+    lang : 'euc-kr'
+})
+
 const searchSiteURL = "http://landfuture.co.kr/workdir/upcate/kyg/kyg_srch.php";
 const searchCondition = {
     tt1 : '1',
@@ -20,7 +24,7 @@ const searchCondition = {
     s_date_from : '2019.04.08',
     s_date_to : '2019.04.30',
     easy_srch : '지역/건물명',
-    list_limit : '20개씩'
+    list_limit : '5개씩'
 }
 const detailViewURL = "http://landfuture.co.kr/workdir/upcate/kyg/kyg_dview.php";
 /*
@@ -38,19 +42,26 @@ client.fetch(searchSiteURL, searchCondition, function(err, $, res, result) {
     
     $('tr.kyg_list_style').each(function (idx) {
         var dParams = $(this).attr('onclick').replace('rlty_new_view(', '').replace(');', '').replace(/\'/g, '').split(',');
+        console.log('dParams', dParams);
+
+        $('#rlty_detail_frm').attr("action", "/workdir/upcate/kyg/kyg_dview.php");
+
         var detailPageContent = $('#rlty_detail_frm').submitSync({
             Cc : dParams[2],
             Sn : dParams[3],
             Rn : dParams[4],
             Rty_Status : dParams[5],
-            pg_tp : dParams[1]
+            pg_tp : dParams[1],
+            MAIN_CATE : 'web'
         });
         var saveFileName = "auction_item_" + dParams[3] + ".html";
         console.log('saveFileName', saveFileName);
-        fs.writeFileSync(saveFileName, detailPageContent.$.html());    
+        fs.writeFileSync('./html_down/' + saveFileName, detailPageContent.$.html());
+        //console.log(detailPageContent.$('span').text());
     });
 });
 
+/*
 function arrayToObject(arr) {
     var obj = {};
     var pTitle = ['f_ct', 'pg_tp', 'cc', 'sn', 'rn', 'Rty_Status', 'other_v', 'From_Which_Section'];
@@ -59,3 +70,4 @@ function arrayToObject(arr) {
     }
     return obj;
 }
+*/
