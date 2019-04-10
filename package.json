@@ -1,0 +1,24 @@
+{
+  "name": "WeatherDataCollect",
+  "version": "1.0.0",
+  "description": "공공데이터 날씨 정보 수집 처리 프로그램",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm run ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hope313/WeatherDataCollect.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hope313/WeatherDataCollect/issues"
+  },
+  "homepage": "https://github.com/hope313/WeatherDataCollect#readme",
+  "devDependencies": {
+    "cheerio-httpcli": "^0.7.4"
+  }
+}
