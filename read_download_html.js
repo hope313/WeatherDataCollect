@@ -31,7 +31,7 @@ fs.readdir(html_down_dir, function (err, filename) {
             */
             console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
 
-            // 
+            // 물건 정보
             $('div[name=basic_info] table tr').each(function (idx) {
                 // console.log(idx, $(this).children('th').text().trim() + " : " + $(this).children('td').text().trim());
                 if(idx > 1) {                    
@@ -49,6 +49,11 @@ fs.readdir(html_down_dir, function (err, filename) {
                     });
                 }
             });
+
+            // 사진 정보
+            $('div[name=pic_map] table table img').each(function (idx) {
+                console.log("[물건이미지] :", $(this).attr('src'));
+            })
             console.log('-------------------------------------------------------');
         })
     }
