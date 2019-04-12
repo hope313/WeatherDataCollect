@@ -21,10 +21,10 @@ const searchCondition = {
     sido : '서울',
     gugun : '마포구',
     menu_srch_bt : '지도검색',
-    s_date_from : '2019.04.08',
-    s_date_to : '2019.04.30',
+    s_date_from : '2019.04.15',
+    s_date_to : '2019.05.30',
     easy_srch : '지역/건물명',
-    list_limit : '5개씩'
+    list_limit : '10개씩'
 }
 const detailViewURL = "http://landfuture.co.kr/workdir/upcate/kyg/kyg_dview.php";
 /*
