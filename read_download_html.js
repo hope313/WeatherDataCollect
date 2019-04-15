@@ -2,13 +2,13 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 
 const html_down_dir = './html_down/';
-var info_txt = '';
 
 fs.readdir(html_down_dir, function (err, filename) {
     for(var i=0; i<filename.length; i++) {
         console.log(filename[i]);
         fs.readFile(html_down_dir + filename[i], function (err, data) {
             const $ = cheerio.load(data);
+            var info_txt = '';
 
             console.log('title', $('title').text());
             info_txt += $('title').text();
@@ -171,12 +171,15 @@ fs.readdir(html_down_dir, function (err, filename) {
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
             console.log('--------------------------------------------------------------------------------------------------------------');
-        })
+            console.log('filename[' + i + '] : ' + filename[i]);
+            writeFile(filename[i], info_txt);
+        });
     }
-    writeFile(filename, info_txt);
 });
 
 function writeFile(filename, info_txt) {
-    console.log('@#@@#@@#@#@#@@##@#@#@#@#', info_txt + '@#@@#@@#@#@#@@##@#@#@#@#');
-    fs.writeFileSync('./' + filename + '.txt', info_txt);
+    fs.writeFile('./' + filename + '.txt', info_txt, (err) => {
+        if (err) throw err;
+        console.log('@#@@#@@#@#@#@@##@#@#@#@#', info_txt + '@#@@#@@#@#@#@@##@#@#@#@#');
+    });
 }
