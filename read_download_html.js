@@ -2,6 +2,7 @@ const fs = require('fs');
 const cheerio = require('cheerio');
 
 const html_down_dir = './html_down/';
+var info_txt = '';
 
 fs.readdir(html_down_dir, function (err, filename) {
     for(var i=0; i<filename.length; i++) {
@@ -10,14 +11,17 @@ fs.readdir(html_down_dir, function (err, filename) {
             const $ = cheerio.load(data);
 
             console.log('title', $('title').text());
+            info_txt += $('title').text();
 
             // 경매 사건 정보 ------------------------------------------------------
             $('form[name=object_change] span').each(function (idx) {
                 console.log($(this).text());
+                info_txt += $(this).text();
             });
 
             // 물번 ------------------------------------------------------
             console.log('[물번] : ', $('select[name=search_realty]').val());
+            info_txt += '[물번] : ' + $('select[name=search_realty]').val();
 
             // 매각기일, 경매계 정보 ------------------------------------------------------
             $('table.kyg_detail_th_bg tr td').each(function (idx) {
@@ -31,7 +35,7 @@ fs.readdir(html_down_dir, function (err, filename) {
             // 물건 정보 ------------------------------------------------------
             $('div[name=basic_info] table tr').each(function (idx) {
 
-                if(idx > 1) {                    
+                if(idx > 1) {
                     var fTitle = '';
                     var fValue = '';
                     $(this).children().each(function (cidx) {
@@ -39,7 +43,7 @@ fs.readdir(html_down_dir, function (err, filename) {
                         if(this.tagName == 'td') fValue = $(this).text().trim();
                         //console.log(idx + '[' + cidx + ']' + this.tagName, $(this).text().trim());
                         if(fTitle != '' && fValue != '') {
-                            console.log('[' + fTitle + '] : ', fValue);
+                            console.log('[' + fTitle + '] : ', fValue.replace(/\t/g, ' '));
                             fTitle = '';
                             fValue = '';
                         }
@@ -48,10 +52,14 @@ fs.readdir(html_down_dir, function (err, filename) {
 
             });
 
+            console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
             // 사진 정보 ------------------------------------------------------
             $('div[name=pic_map] table table img').each(function (idx) {
                 console.log("[물건이미지] :", $(this).attr('src'));
-            })
+            });
+
+            console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
             // 토지 / 건물 현황 ------------------------------------------------------
             var gubun = '';         // 토지, 건물, 제시외 구분
@@ -76,7 +84,7 @@ fs.readdir(html_down_dir, function (err, filename) {
                             }
                             console.log("[" + gubun + temp + "]");      //, item_count);
                         }
-
+                        
                         item_values.push($(this).text().trim());
                     });
                 }
@@ -87,21 +95,88 @@ fs.readdir(html_down_dir, function (err, filename) {
 
                 if(idx > 0) {
                     for(var i=0; i<title_arry.length; i++) {
-                        console.log("  - " + title_arry[i] + " : ", item_values[i+1]);
+                        if(item_values[i+1] != undefined) {
+                            console.log("  - " + title_arry[i] + " : ", item_values[i+1]);
+                        }
                     }
                 }
             });
 
-            // 지역분석 및 도로현황  ------------------------------------------------------
-            console.log('[지역분석 및 도로현황]\n', '   ' + $('#idx_list_div').text().trim());
+            console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
-            console.log($('table.brd_title_sub tr td').text());
-            /*
-            $('table.brd_title_sub tr').each(function (idx) {
-                console.log($(this).text());
+            // 지역분석 및 도로현황  ------------------------------------------------------
+            console.log('[지역분석 및 도로현황]', $('#idx_list_div').text().trim().replace(/\t|\n|\r/g, '').replace(/\]/g, ']\n   ').replace(/\[/g, '\n [').replace(/\./g, '.\n   '));
+
+            console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
+            // 임자인 현황
+            console.log('[임차인 현황]\n   ' + $('table.brd_title_sub tr td').eq(0).text().replace(/\t|\n|\r/g, '') + '\n');
+
+            var tenant_titles = new Array();
+            var tenant_values = new Array();
+            var tr_count = $('#tenant_info table').eq(0).children('tr').length;
+
+            $('#tenant_info table').eq(0).children('tr').each(function (idx) {  
+                //if(idx < tr_count-1) {
+                    tenant_values[idx-1] = new Array();            
+                    $(this).children().each(function (cidx) {
+                        if(idx < 1) {       // 항목 타이틀
+                            tenant_titles.push($(this).text());
+                        } else {            // 항목 값
+                            tenant_values[idx-1].push($(this).text().trim());
+                        }
+                    });
+                //}
             });
-            */
+
+            //console.log('@@@@@@@@@@@@@@@@@@@@tenant_titles : ', tenant_titles);
+            //console.log('@@@@@@@@@@@@@@@@@@@@tenant_values : ', tenant_values);
+
+            console.log('     *********************************************************************************');
+
+            for(var i=0; i<tenant_values.length; i++) {
+                for(var j=0; j<tenant_values[i].length; j++) {
+                    console.log('     [' + tenant_titles[j] + '] : ', tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
+                }
+                console.log('     *********************************************************************************\n');
+            }
+            
+            //console.log($('#tenant_info > table').eq(1).text());
+            var tenant2_titles = new Array();
+            var tenant2_values = new Array();
+            $('#tenant_info > table').eq(1).children('tr').each(function (idx) {  
+                //tenant_values[idx-1] = new Array();            
+                $(this).children().each(function (cidx) {
+                    if(this.tagName == 'th') {       // 항목 타이틀
+                        tenant2_titles.push($(this).text());
+                    } else {            // 항목 값
+                        if($(this).attr('colspan')) {       // 주의사항/법원문건접수 요약 항목
+                            var warning_msgs = $(this).text().trim().replace(/\t|\n|\r|\[/g, '').split(']');
+                            tenant2_titles.push(warning_msgs[0]);
+                            tenant2_values.push(warning_msgs[1].replace(/\./g, '.\n      '));
+                        } else {        // 항목 값
+                            tenant2_values.push($(this).text().trim());
+                        }
+                    }
+                });
+            });
+
+            //console.log('@@@@@@@@@@@@@@@@@@@@tenant2_titles : ', tenant2_titles);
+            //console.log('@@@@@@@@@@@@@@@@@@@@tenant2_values : ', tenant2_values);
+
+            for(var i=0; i<tenant2_titles.length; i++) {
+                console.log('     [' + tenant2_titles[i] + ']\n', '      ' + tenant2_values[i]);
+            }
+
+            console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+
             console.log('--------------------------------------------------------------------------------------------------------------');
         })
     }
-})
+    writeFile(filename, info_txt);
+});
+
+function writeFile(filename, info_txt) {
+    console.log('@#@@#@@#@#@#@@##@#@#@#@#', info_txt + '@#@@#@@#@#@#@@##@#@#@#@#');
+    fs.writeFileSync('./' + filename + '.txt', info_txt);
+}
