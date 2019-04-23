@@ -1,38 +1,48 @@
 const fs = require('fs');
 const cheerio = require('cheerio');
+const path = require('path');
 
 const html_down_dir = './html_down/';
 
+// 파일 내용 읽어 데이터 파일 생성
 fs.readdir(html_down_dir, function (err, filename) {
     for(var i=0; i<filename.length; i++) {
-        console.log(filename[i]);
-        fs.readFile(html_down_dir + filename[i], function (err, data) {
+        console.log('>>>>>>>>>>>>>>>>>>> ', filename[i]);
+        getData(filename[i]).then(function (data) {
+            //console.log(data);
             const $ = cheerio.load(data);
             var info_txt = '';
+            let auction_info = {};
 
             console.log('title', $('title').text());
-            info_txt += $('title').text();
+            info_txt += $('title').text() + '\n';
+            auction_info.title = $('title').text();
 
             // 경매 사건 정보 ------------------------------------------------------
+            auction_info.sagun_infos = new Array();
             $('form[name=object_change] span').each(function (idx) {
                 console.log($(this).text());
                 info_txt += $(this).text();
+                auction_info.sagun_infos.push($(this).text());
             });
 
             // 물번 ------------------------------------------------------
             console.log('[물번] : ', $('select[name=search_realty]').val());
             info_txt += '[물번] : ' + $('select[name=search_realty]').val();
+            auction_info.mulbun = $('select[name=search_realty]').val();
 
             // 매각기일, 경매계 정보 ------------------------------------------------------
             $('table.kyg_detail_th_bg tr td').each(function (idx) {
                 if(idx > 0) {
                     console.log($(this).text());
+                    auction_info.maegak_kyeong_info = $(this).text();
                 }
             });
 
             console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
 
             // 물건 정보 ------------------------------------------------------
+            auction_info.mulgun_info = new Array();
             $('div[name=basic_info] table tr').each(function (idx) {
 
                 if(idx > 1) {
@@ -44,6 +54,7 @@ fs.readdir(html_down_dir, function (err, filename) {
                         //console.log(idx + '[' + cidx + ']' + this.tagName, $(this).text().trim());
                         if(fTitle != '' && fValue != '') {
                             console.log('[' + fTitle + '] : ', fValue.replace(/\t/g, ' '));
+                            auction_info.mulgun_info.push('[' + fTitle + '] : ' + fValue.replace(/\t/g, ' '));
                             fTitle = '';
                             fValue = '';
                         }
@@ -55,8 +66,10 @@ fs.readdir(html_down_dir, function (err, filename) {
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
             // 사진 정보 ------------------------------------------------------
+            auction_info.pic_infos = new Array();
             $('div[name=pic_map] table table img').each(function (idx) {
                 console.log("[물건이미지] :", $(this).attr('src'));
+                auction_info.pic_infos.push("[물건이미지] :" + $(this).attr('src'))
             });
 
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
@@ -65,6 +78,8 @@ fs.readdir(html_down_dir, function (err, filename) {
             var gubun = '';         // 토지, 건물, 제시외 구분
             var title_arry = new Array();       // 항목 타이틀(지번, 용도/구조/대지권, 면적, 비고)
             var item_count = 0;     // 하위 항목 개수
+
+            auction_info.land_building_infos = new Array();
 
             $('#bldg_info table tr').each(function (idx) {      // tr
                 var item_values = new Array();      // 하위 항목 내용
@@ -97,6 +112,7 @@ fs.readdir(html_down_dir, function (err, filename) {
                     for(var i=0; i<title_arry.length; i++) {
                         if(item_values[i+1] != undefined) {
                             console.log("  - " + title_arry[i] + " : ", item_values[i+1]);
+                            auction_info.land_building_infos.push("  - " + title_arry[i] + " : " + item_values[i+1]);
                         }
                     }
                 }
@@ -106,15 +122,19 @@ fs.readdir(html_down_dir, function (err, filename) {
 
             // 지역분석 및 도로현황  ------------------------------------------------------
             console.log('[지역분석 및 도로현황]', $('#idx_list_div').text().trim().replace(/\t|\n|\r/g, '').replace(/\]/g, ']\n   ').replace(/\[/g, '\n [').replace(/\./g, '.\n   '));
+            auction_info.region_road_info = '[지역분석 및 도로현황]' + $('#idx_list_div').text().trim().replace(/\t|\n|\r/g, '').replace(/\]/g, ']\n   ').replace(/\[/g, '\n [').replace(/\./g, '.\n   ');
 
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
             // 임자인 현황
             console.log('[임차인 현황]\n   ' + $('table.brd_title_sub tr td').eq(0).text().replace(/\t|\n|\r/g, '') + '\n');
+            auction_info.renter = '[임차인 현황]\n   ' + $('table.brd_title_sub tr td').eq(0).text().replace(/\t|\n|\r/g, '') + '\n';
 
             var tenant_titles = new Array();
             var tenant_values = new Array();
             var tr_count = $('#tenant_info table').eq(0).children('tr').length;
+
+            auction_info.tenant_infos = new Array();
 
             $('#tenant_info table').eq(0).children('tr').each(function (idx) {  
                 //if(idx < tr_count-1) {
@@ -137,6 +157,7 @@ fs.readdir(html_down_dir, function (err, filename) {
             for(var i=0; i<tenant_values.length; i++) {
                 for(var j=0; j<tenant_values[i].length; j++) {
                     console.log('     [' + tenant_titles[j] + '] : ', tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
+                    auction_info.tenant_infos.push('     [' + tenant_titles[j] + '] : ' + tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
                 }
                 console.log('     *********************************************************************************\n');
             }
@@ -144,6 +165,9 @@ fs.readdir(html_down_dir, function (err, filename) {
             //console.log($('#tenant_info > table').eq(1).text());
             var tenant2_titles = new Array();
             var tenant2_values = new Array();
+
+            auction_info.tenant2_infos = new Array();
+
             $('#tenant_info > table').eq(1).children('tr').each(function (idx) {  
                 //tenant_values[idx-1] = new Array();            
                 $(this).children().each(function (cidx) {
@@ -166,20 +190,62 @@ fs.readdir(html_down_dir, function (err, filename) {
 
             for(var i=0; i<tenant2_titles.length; i++) {
                 console.log('     [' + tenant2_titles[i] + ']\n', '      ' + tenant2_values[i]);
+                auction_info.tenant2_infos.push('     [' + tenant2_titles[i] + ']\n' + '      ' + tenant2_values[i]);
             }
 
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 
             console.log('--------------------------------------------------------------------------------------------------------------');
-            console.log('filename[' + i + '] : ' + filename[i]);
-            writeFile(filename[i], info_txt);
+            
+
+            console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', $('title').text().substr(0, 10).replace('타경', '-'));
+            console.log('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^', JSON.stringify(auction_info));
+
+            var fileName = $('title').text().substr(0, 10).replace('타경', '-');
+
+            writeFile(fileName, JSON.stringify(auction_info));
+        }).catch(function (err) {
+            console.log(err);
         });
     }
 });
 
-function writeFile(filename, info_txt) {
-    fs.writeFile('./' + filename + '.txt', info_txt, (err) => {
-        if (err) throw err;
-        console.log('@#@@#@@#@#@#@@##@#@#@#@#', info_txt + '@#@@#@@#@#@#@@##@#@#@#@#');
+// 파일 데이터 내용 읽기(promise)
+function getData (filename) {
+    return new Promise(function (resolve, reject) {
+        fs.readFile(html_down_dir + filename, function (err, data) {
+            if (err) reject(err);
+            else {
+                resolve(data);
+            }
+        });
     });
+}
+
+// 정보 데이터 파일 생성
+function writeFile(filename, auction_info_json) {
+    var json_file_path = './json_data/' + filename + '.json';
+
+    checkSaveDir(json_file_path);
+
+    fs.writeFile(json_file_path, auction_info_json, (err) => {
+        if (err) throw err;
+        console.log('@#@@#@@#@#@#@@##@#@#@#@#', auction_info_json + '@#@@#@@#@#@#@@##@#@#@#@#');
+    });
+}
+
+// 저장할 디렉토리 존재유무 확인
+function checkSaveDir(fname) {
+    // 디렉터리 부분만 검출
+    var dir = path.dirname(fname);
+
+    // 디렉토리를 재귀적으로 생성
+    var dirlist = dir.split("/");
+    var p = "";
+    for (var i in dirlist) {
+        p += dirlist[i] + "/";
+        if (!fs.existsSync(p)) {
+            fs.mkdirSync(p);
+        }
+    }
 }
