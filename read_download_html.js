@@ -1,14 +1,14 @@
 const fs = require('fs');
 const cheerio = require('cheerio');
 const path = require('path');
-
-const html_down_dir = './html_down/';
+const cfg = require('./module/config');
+const commonFunc = require('./module/common_func');
 
 // 파일 내용 읽어 데이터 파일 생성
-fs.readdir(html_down_dir, function (err, filename) {
+fs.readdir(cfg.html_down_dir, function (err, filename) {
     for(var i=0; i<filename.length; i++) {
         console.log('>>>>>>>>>>>>>>>>>>> ', filename[i]);
-        getData(filename[i]).then(function (data) {
+        commonFunc.getData(filename[i]).then(function (data) {
             //console.log(data);
             const $ = cheerio.load(data);
             var info_txt = '';
@@ -156,8 +156,8 @@ fs.readdir(html_down_dir, function (err, filename) {
 
             for(var i=0; i<tenant_values.length; i++) {
                 for(var j=0; j<tenant_values[i].length; j++) {
-                    console.log('     [' + tenant_titles[j] + '] : ', tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
-                    auction_info.tenant_infos.push('     [' + tenant_titles[j] + '] : ' + tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
+                    console.log('[' + tenant_titles[j] + '] : ', tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
+                    auction_info.tenant_infos.push('[' + tenant_titles[j] + '] : ' + tenant_values[i][j].replace(/\t|\n|\r/g, ' '));
                 }
                 console.log('     *********************************************************************************\n');
             }
@@ -189,8 +189,8 @@ fs.readdir(html_down_dir, function (err, filename) {
             //console.log('@@@@@@@@@@@@@@@@@@@@tenant2_values : ', tenant2_values);
 
             for(var i=0; i<tenant2_titles.length; i++) {
-                console.log('     [' + tenant2_titles[i] + ']\n', '      ' + tenant2_values[i]);
-                auction_info.tenant2_infos.push('     [' + tenant2_titles[i] + ']\n' + '      ' + tenant2_values[i]);
+                console.log('[' + tenant2_titles[i] + ']\n', '      ' + tenant2_values[i]);
+                auction_info.tenant2_infos.push('[' + tenant2_titles[i] + ']\n' + '      ' + tenant2_values[i]);
             }
 
             console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
@@ -203,49 +203,9 @@ fs.readdir(html_down_dir, function (err, filename) {
 
             var fileName = $('title').text().substr(0, 10).replace('타경', '-');
 
-            writeFile(fileName, JSON.stringify(auction_info));
+            commonFunc.writeFile(fileName, JSON.stringify(auction_info));
         }).catch(function (err) {
             console.log(err);
         });
     }
 });
-
-// 파일 데이터 내용 읽기(promise)
-function getData (filename) {
-    return new Promise(function (resolve, reject) {
-        fs.readFile(html_down_dir + filename, function (err, data) {
-            if (err) reject(err);
-            else {
-                resolve(data);
-            }
-        });
-    });
-}
-
-// 정보 데이터 파일 생성
-function writeFile(filename, auction_info_json) {
-    var json_file_path = './json_data/' + filename + '.json';
-
-    checkSaveDir(json_file_path);
-
-    fs.writeFile(json_file_path, auction_info_json, (err) => {
-        if (err) throw err;
-        console.log('@#@@#@@#@#@#@@##@#@#@#@#', auction_info_json + '@#@@#@@#@#@#@@##@#@#@#@#');
-    });
-}
-
-// 저장할 디렉토리 존재유무 확인
-function checkSaveDir(fname) {
-    // 디렉터리 부분만 검출
-    var dir = path.dirname(fname);
-
-    // 디렉토리를 재귀적으로 생성
-    var dirlist = dir.split("/");
-    var p = "";
-    for (var i in dirlist) {
-        p += dirlist[i] + "/";
-        if (!fs.existsSync(p)) {
-            fs.mkdirSync(p);
-        }
-    }
-}

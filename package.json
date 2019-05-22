@@ -20,6 +20,7 @@
   "homepage": "https://github.com/hope313/WeatherDataCollect#readme",
   "devDependencies": {
     "cheerio-httpcli": "^0.7.4",
-    "jshint": "^2.10.2"
+    "jshint": "^2.10.2",
+    "mysql": "^2.17.1"
   }
 }
